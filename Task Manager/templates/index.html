@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-icon">&#9776;</div>
+            <div>
+                <h1>Task Manager</h1>
+                <p class="subtitle">Create tasks, set deadlines and priorities, update status, and track records.</p>
+            </div>
+        </header>
+
+        <!-- New Task Form Card -->
+        <section class="card form-card">
+            <h2>Create New Task</h2>
+            <form action="{{ url_for('add_task') }}" method="POST" class="task-form">
+                <div class="form-row">
+                    <div class="form-group flex-2">
+                        <label for="title">Task Title <span class="required">*</span></label>
+                        <input type="text" id="title" name="title" placeholder="e.g., Prepare quarterly report" required>
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="deadline">Deadline</label>
+                        <input type="date" id="deadline" name="deadline">
+                    </div>
+                    <div class="form-group flex-1">
+                        <label for="priority">Priority</label>
+                        <select id="priority" name="priority">
+                            <option value="Low">Low</option>
+                            <option value="Medium" selected>Medium</option>
+                            <option value="High">High</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group flex-1">
+                        <label for="description">Description (optional)</label>
+                        <textarea id="description" name="description" rows="2" placeholder="Add any details or notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">+ Add Task</button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Task Records Section -->
+        <section class="card records-card">
+            <div class="records-header">
+                <h2>Saved Task Records</h2>
+                <!-- Filter tabs -->
+                <div class="filter-tabs">
+                    <a href="{{ url_for('index', status='All') }}" class="filter-btn {% if current_filter == 'All' %}active{% endif %}">All</a>
+                    <a href="{{ url_for('index', status='Pending') }}" class="filter-btn {% if current_filter == 'Pending' %}active{% endif %}">Pending</a>
+                    <a href="{{ url_for('index', status='In Progress') }}" class="filter-btn {% if current_filter == 'In Progress' %}active{% endif %}">In Progress</a>
+                    <a href="{{ url_for('index', status='Completed') }}" class="filter-btn {% if current_filter == 'Completed' %}active{% endif %}">Completed</a>
+                </div>
+            </div>
+
+            {% if tasks %}
+            <div class="table-responsive">
+                <table class="tasks-table">
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Deadline</th>
+                            <th>Priority</th>
+                            <th>Status</th>
+                            <th>Change Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for task in tasks %}
+                        <tr class="task-row status-{{ task['status']|lower|replace(' ', '-') }}">
+                            <td class="task-info">
+                                <div class="task-title {% if task['status'] == 'Completed' %}completed-title{% endif %}">
+                                    {{ task['title'] }}
+                                </div>
+                                {% if task['description'] %}
+                                <div class="task-desc">{{ task['description'] }}</div>
+                                {% endif %}
+                                <div class="task-created">Created: {{ task['created_at'] }}</div>
+                            </td>
+                            <td class="task-deadline">
+                                {% if task['deadline'] %}
+                                    <span class="deadline-tag">&#128197; {{ task['deadline'] }}</span>
+                                {% else %}
+                                    <span class="no-deadline">No deadline</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge priority-{{ task['priority']|lower }}">
+                                    {{ task['priority'] }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge status-badge-{{ task['status']|lower|replace(' ', '-') }}">
+                                    {{ task['status'] }}
+                                </span>
+                            </td>
+                            <td>
+                                <form action="{{ url_for('update_status', task_id=task['id']) }}" method="POST" class="inline-status-form">
+                                    <select name="status" onchange="this.form.submit()" class="status-select">
+                                        <option value="Pending" {% if task['status'] == 'Pending' %}selected{% endif %}>Pending</option>
+                                        <option value="In Progress" {% if task['status'] == 'In Progress' %}selected{% endif %}>In Progress</option>
+                                        <option value="Completed" {% if task['status'] == 'Completed' %}selected{% endif %}>Completed</option>
+                                    </select>
+                                </form>
+                            </td>
+                            <td class="actions-cell">
+                                <a href="{{ url_for('edit_task', task_id=task['id']) }}" class="btn-action btn-edit" title="Edit Task">&#9998; Edit</a>
+                                <form action="{{ url_for('delete_task', task_id=task['id']) }}" method="POST" class="inline-form" onsubmit="return confirm('Are you sure you want to delete this task?');">
+                                    <button type="submit" class="btn-action btn-delete" title="Delete Task">&#128465; Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">&#128221;</div>
+                <p>No tasks found {% if current_filter != 'All' %}with status "{{ current_filter }}"{% endif %}.</p>
+                <p class="empty-hint">Create a task above to get started!</p>
+            </div>
+            {% endif %}
+        </section>
+    </div>
+</body>
+</html>
