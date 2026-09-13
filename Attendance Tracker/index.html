@@ -2,7 +2,7 @@
 <html>
 <head>
     <title>Attendance Tracker</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
@@ -10,66 +10,71 @@
     <div class="container">
 
         <h1>Attendance Tracker</h1>
-
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <ul class="flashes">
+            {% for category, message in messages %}
+              <li class="{{ category }}">{{ message }}</li>
+            {% endfor %}
+            </ul>
+          {% endif %}
+        {% endwith %}
 
         <!-- Register Trainee -->
         <div class="section">
-
             <h2>Register Trainee</h2>
-
-            <form>
-
+            <form action="{{ url_for('register_trainee') }}" method="POST">
                 <label>Trainee ID</label>
-                <input type="text" name="trainee_id">
-
+                <input type="text" name="trainee_id" required>
                 <label>Trainee Name</label>
-                <input type="text" name="trainee_name">
-
+                <input type="text" name="trainee_name" required>
                 <button type="submit">Register Trainee</button>
-
             </form>
-
         </div>
-
 
         <!-- Mark Attendance -->
         <div class="section">
-
             <h2>Mark Attendance</h2>
+            <form action="{{ url_for('index') }}" method="GET" id="date-form">
+                <label>Select Date</label>
+                <input type="date" name="date" value="{{ selected_date }}" onchange="document.getElementById('date-form').submit()">
+            </form>
 
-            <label>Select Date</label>
-            <input type="date" name="attendance_date">
-
-
-            <table>
-
-                <thead>
-                    <tr>
-                        <th>Trainee ID</th>
-                        <th>Trainee Name</th>
-                        <th>Present</th>
-                        <th>Absent</th>
-                    </tr>
-                </thead>
-
-                <tbody>
-                    <!-- Backend will add trainees here -->
-                </tbody>
-
-            </table>
-
-            <button type="button">Save Attendance</button>
-
+            <form action="{{ url_for('mark_attendance') }}" method="POST">
+                <input type="hidden" name="attendance_date" value="{{ selected_date }}">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Trainee ID</th>
+                            <th>Trainee Name</th>
+                            <th>Present</th>
+                            <th>Absent</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trainee in trainees %}
+                        <tr>
+                            <td>{{ trainee.id }}</td>
+                            <td>{{ trainee.name }}</td>
+                            <td>
+                                <input type="radio" name="status_{{ trainee.id }}" value="Present" {% if trainee.status == 'Present' %}checked{% endif %}>
+                            </td>
+                            <td>
+                                <input type="radio" name="status_{{ trainee.id }}" value="Absent" {% if trainee.status == 'Absent' %}checked{% endif %}>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                <button type="submit">Save Attendance</button>
+            </form>
         </div>
-
 
         <!-- Attendance Report -->
         <div class="section">
-
             <h2>Attendance Report</h2>
-
             <table>
-
                 <thead>
                     <tr>
                         <th>Trainee ID</th>
@@ -80,15 +85,23 @@
                         <th>Attendance %</th>
                     </tr>
                 </thead>
-
                 <tbody>
-                    <!-- Backend will add attendance report here -->
+                    {% for row in report %}
+                    <tr>
+                        <td>{{ row.id }}</td>
+                        <td>{{ row.name }}</td>
+                        <td>{{ row.total_days }}</td>
+                        <td>{{ row.present }}</td>
+                        <td>{{ row.absent }}</td>
+                        <td>{{ row.percentage }}%</td>
+                    </tr>
+                    {% endfor %}
                 </tbody>
-
             </table>
-
-            <button type="button">Export Report</button>
-
+            
+            <form action="{{ url_for('export_report') }}" method="GET" style="margin-top: 15px;">
+                <button type="submit">Export Report</button>
+            </form>
         </div>
 
     </div>
