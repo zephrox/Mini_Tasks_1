@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Inventory Manager</h1>
+            <a href="{{ url_for('add_product') }}" class="btn">Add Product</a>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flashes">
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="controls">
+            <form action="{{ url_for('index') }}" method="GET" class="search-form">
+                <input type="text" name="search" placeholder="Search by Name or SKU..." value="{{ search_query }}">
+                <button type="submit" class="btn">Search</button>
+                <a href="{{ url_for('index') }}" class="btn btn-secondary">Clear</a>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>SKU</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Quantity</th>
+                    <th>Stock Alert</th>
+                    <th>Stock Movement</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventory %}
+                <tr>
+                    <td>{{ item.sku }}</td>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.description }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>
+                        {% if item.quantity <= item.threshold %}
+                            <span class="badge danger">Low Stock</span>
+                        {% else %}
+                            <span class="badge success">OK</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <form action="{{ url_for('stock_movement', item_id=item.id) }}" method="POST" class="movement-form">
+                            <input type="number" name="amount" min="1" required placeholder="Qty">
+                            <button type="submit" name="action" value="in" class="btn btn-sm btn-success">In</button>
+                            <button type="submit" name="action" value="out" class="btn btn-sm btn-danger">Out</button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="text-center">No products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
